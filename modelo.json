@@ -1,0 +1,824 @@
+{
+    "title": "Modelo de datos - an0010001_conc_transportes",
+    "nodes": [
+        {
+            "id": "file_ejecucion_py",
+            "type": "file",
+            "label": "src/an0010001_conc_transportes/ejecucion.py",
+            "description": "Archivo de entrada del modelo orquestador. Construye el Orchestrator con los steps Comprobante, SustentacionP y Rechazos.",
+            "source": "src/an0010001_conc_transportes/ejecucion.py"
+        },
+        {
+            "id": "file_conciliador_py",
+            "type": "file",
+            "label": "src/an0010001_conc_transportes/conciliador.py",
+            "description": "Clase base de los steps. Carga parámetros de config.json, ajusta zonas/tablas y ejecuta tareas.",
+            "source": "src/an0010001_conc_transportes/conciliador.py"
+        },
+        {
+            "id": "file_comprobante_py",
+            "type": "file",
+            "label": "src/an0010001_conc_transportes/comprobante.py",
+            "description": "Step Comprobante. Ejecuta preparación de usos, conciliación, cargas temporales y marcación de comprobantes.",
+            "source": "src/an0010001_conc_transportes/comprobante.py"
+        },
+        {
+            "id": "file_sustentacion_py",
+            "type": "file",
+            "label": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "description": "Step SustentacionP. Ejecuta extracción de pagos, depósitos, contabilidad y validaciones.",
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py"
+        },
+        {
+            "id": "file_rechazos_py",
+            "type": "file",
+            "label": "src/an0010001_conc_transportes/rechazos.py",
+            "description": "Step Rechazos. Gestiona histórico de rechazos, pendientes y recuperaciones.",
+            "source": "src/an0010001_conc_transportes/rechazos.py"
+        },
+        {
+            "id": "file_config_json",
+            "type": "configuration",
+            "label": "src/an0010001_conc_transportes/static/config.json",
+            "description": "Configuración global con zonas, tablas parametrizadas, fechas y orden de tareas.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "process_orchestrator",
+            "type": "process",
+            "label": "Orchestrator an0010001-conc-transportes",
+            "description": "Proceso orquestador principal.",
+            "source": "src/an0010001_conc_transportes/ejecucion.py"
+        },
+        {
+            "id": "process_comprobante",
+            "type": "process",
+            "label": "Step Comprobante",
+            "description": "Orden de tareas: actualizar_fechas -> extract_info_usos -> validar_calidad_usos -> marcacion -> marcar_comprobantes.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "process_sustentacion",
+            "type": "process",
+            "label": "Step SustentacionP",
+            "description": "Orden de tareas: cargar_configuracion -> actualizar_fechas -> validar_mdm -> extract_info_tarj -> extract_comun_usos -> extract_info_usos -> validar_calidad_usos -> extract_info_pagos -> validar_pagos -> validar_pagos_acumulados -> ultima_fecha_comprobante -> extract_info_depositos -> extract_info_gldytd.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "process_rechazos",
+            "type": "process",
+            "label": "Step Rechazos",
+            "description": "Orden de tareas: recalcular_fechas -> consulta_fecha_consulta -> consulta_fecha_temporalidad -> consulta_hist_rechazos -> adicionar_pendientes -> recuperaciones.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_usos",
+            "type": "table",
+            "label": "proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRHUS",
+            "description": "Tabla origen de usos parametrizada como {zn_sp}.{usos}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_dtrnp",
+            "type": "table",
+            "label": "proceso_enmascarado.BVD_VISIONRY_DTRNP",
+            "description": "Tabla origen de depósitos DTRNP parametrizada como {zn_sp}.{dtrnp}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_dreco",
+            "type": "table",
+            "label": "proceso_enmascarado.BVD_VISIONR_DRECO",
+            "description": "Tabla origen de depósitos DRECO parametrizada como {zn_sp}.{dreco}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_hre",
+            "type": "table",
+            "label": "proceso_enmascarado.MAT_MATLIBRAMD_MATTBTRHRE",
+            "description": "Tabla origen de rechazos parametrizada como {zn_sp}.{hre}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_mae",
+            "type": "table",
+            "label": "proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMAE",
+            "description": "Tabla origen MAE parametrizada como {zn_sp}.{mae}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_productos_mor",
+            "type": "table",
+            "label": "proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMOR",
+            "description": "Tabla origen MOR parametrizada como {zn_sp}.mat_matlibramd_matfftrmor y como parámetro {mor}.",
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql"
+        },
+        {
+            "id": "table_s_canales_tarj",
+            "type": "table",
+            "label": "proceso_enmascarado.CAB_CABLIBRAMD_CABFFTARJ",
+            "description": "Tabla origen TARJ parametrizada como {zn_sc}.{tarj}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_canales_ctas",
+            "type": "table",
+            "label": "proceso_enmascarado.CAB_CABLIBRAMD_CABFFCTAS",
+            "description": "Tabla origen CTAS parametrizada como {zn_sc}.{ctas}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_s_apoyo_gldytd",
+            "type": "table",
+            "label": "proceso_enmascarado.bks_ccsap_visionr_gldytd",
+            "description": "Tabla origen GLDYTD parametrizada como {zn_saf}.{gldytd}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_resultados_pagos",
+            "type": "table",
+            "label": "proceso_enmascarado.fcr_pab_transacciones_pagos",
+            "description": "Tabla origen de pagos parametrizada como {zn_rf}.{pagos}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_resultados_llavero",
+            "type": "table",
+            "label": "proceso_enmascarado.FCR_MDM_LLAVERO_CLIENTES",
+            "description": "Tabla MDM llavero parametrizada como {zn_rf}.{llavero}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_resultados_datos_generales",
+            "type": "table",
+            "label": "proceso_enmascarado.fcr_mdm_datos_generales_clientes",
+            "description": "Tabla MDM datos generales parametrizada como {zn_rf}.{datos_generales}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_resultados_relacion_cp",
+            "type": "table",
+            "label": "proceso_enmascarado.fcr_mdm_relacion_cliente_producto",
+            "description": "Tabla MDM relación cliente producto parametrizada como {zn_rf}.{relacion_c_p}.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_proc_comprobantes",
+            "type": "table",
+            "label": "proceso_enmascarado.comprobantes_conc_transporte",
+            "description": "Tabla destino de comprobantes diarios.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_proc_maestro_comprobantes",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_maestro_comprobantes",
+            "description": "Tabla maestro de comprobantes parametrizada en config.",
+            "source": "src/an0010001_conc_transportes/static/config.json"
+        },
+        {
+            "id": "table_proc_tmp_tarj_ctas",
+            "type": "table",
+            "label": "proceso_enmascarado.tmp_tarj_ctas",
+            "description": "Tabla temporal creada con cruce de TARJ y CTAS.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql"
+        },
+        {
+            "id": "table_proc_pagos_cta_banco",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos_cta_banco",
+            "description": "Tabla temporal de usos base para pagos a empresas de transporte.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/usos.sql"
+        },
+        {
+            "id": "table_proc_depositos",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_depositos",
+            "description": "Tabla temporal de depósitos DTRNP y DRECO.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql"
+        },
+        {
+            "id": "table_proc_usos_sust",
+            "type": "table",
+            "label": "Sin fuente de información",
+            "description": "Tabla temporal de usos de sustentaciónP. El nombre se infiere en Python como {acroni}_usos_sustentacionP, pero no se encontró el SQL de creación/carga en la evidencia leída.",
+            "source": "src/an0010001_conc_transportes/conciliador.py"
+        },
+        {
+            "id": "table_proc_pagos",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos",
+            "description": "Tabla temporal de pagos ACH.",
+            "source": "src/an0011_conc_transportes/static/sql/sustentacionP/pagos.sql"
+        },
+        {
+            "id": "table_proc_contabilidad",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_contabilidad",
+            "description": "Tabla temporal de movimientos contables GLDYTD.",
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql"
+        },
+        {
+            "id": "table_proc_usos_depo",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_usos_depo",
+            "description": "Tabla temporal unificada de comprobantes y depósitos para conciliación.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql"
+        },
+        {
+            "id": "table_proc_pagos_conciliados_tmp",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos_conciliados",
+            "description": "Tabla temporal cargada desde DataFrame de conciliados.",
+            "source": "src/an0010001_conc_transportes/comprobante.py"
+        },
+        {
+            "id": "table_proc_pagos_pendientes_tmp",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos_pendientes",
+            "description": "Tabla temporal cargada desde DataFrame de pendientes.",
+            "source": "src/an0010001_conc_transportes/comprobante.py"
+        },
+        {
+            "id": "table_proc_pagos_conciliados_hist",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos_conciliados_hist",
+            "description": "Histórico de conciliados.",
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/insertar_conciliados.sql"
+        },
+        {
+            "id": "table_proc_pagos_pendientes_hist",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_pagos_pendientes_hist",
+            "description": "Histórico de pendientes.",
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/insertar_pendientes.sql"
+        },
+        {
+            "id": "table_proc_mala_calidad",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_mala_calidad",
+            "description": "Tabla de registros con calidad incompleta.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/guardar_usos_incompletos.sql"
+        },
+        {
+            "id": "table_proc_hist_rechazos",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_hist_rechazos",
+            "description": "Histórico de rechazos y pendientes por cobrar.",
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql"
+        },
+        {
+            "id": "table_proc_recuperaciones",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_recuperaciones",
+            "description": "Tabla de recuperaciones detectadas por cambio de estado entre días.",
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/insertar_recuperaciones.sql"
+        },
+        {
+            "id": "table_proc_pg",
+            "type": "table",
+            "label": "proceso_enmascarado.conc_transporte_temp_p_g",
+            "description": "Tabla de control de fechas de consulta, corte y fuera de temporalidad.",
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/fecha_consulta.sql"
+        },
+        {
+            "id": "file_sql_general_usos",
+            "type": "file",
+            "label": "static/sql/general/usos.sql",
+            "description": "Carga {acroni}_pagos_cta_banco desde usos.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/usos.sql"
+        },
+        {
+            "id": "file_sql_general_tarj_ctas",
+            "type": "file",
+            "label": "static/sql/general/tarj_ctas.sql",
+            "description": "Crea tmp_tarj_ctas con JOIN entre TARJ y CTAS.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql"
+        },
+        {
+            "id": "file_sql_general_dtrnp",
+            "type": "file",
+            "label": "static/sql/general/dtrnp.sql",
+            "description": "Inserta depósitos desde DTRNP con joins a MDM.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql"
+        },
+        {
+            "id": "file_sql_general_dreco",
+            "type": "file",
+            "label": "static/sql/general/dreco.sql",
+            "description": "Inserta depósitos desde DRECO con joins a MDM.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql"
+        },
+        {
+            "id": "file_sql_general_unificar",
+            "type": "file",
+            "label": "static/sql/general/unificar_usos_depo.sql",
+            "description": "Unifica comprobantes y depósitos en tabla temporal para conciliación.",
+            "source": "src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql"
+        },
+        {
+            "id": "file_sql_comp_usos",
+            "type": "file",
+            "label": "static/sql/comprobante/usos_comprobante.sql",
+            "description": "Construye comprobantes enriquecidos con MAE, MOR, tmp_tarj_ctas y MDM.",
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql"
+        },
+        {
+            "id": "file_sql_sust_pagos",
+            "type": "file",
+            "label": "static/sql/sustentacionP/pagos.sql",
+            "description": "Carga tabla temporal de pagos ACH.",
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/pagos.sql"
+        },
+        {
+            "id": "file_sql_sust_conta",
+            "type": "file",
+            "label": "static/sql/sustentacionP/contabilidad.sql",
+            "description": "Carga tabla temporal de contabilidad GLDYTD.",
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql"
+        },
+        {
+            "id": "file_sql_rech_hist",
+            "type": "file",
+            "label": "static/sql/rechazos/hist_rechazos.sql",
+            "description": "Carga histórico de rechazos desde HRE.",
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql"
+        }
+    ],
+    "edges": [
+        {
+            "source": "src/an0010001_conc_transportes/ejecucion.py",
+            "target": "process_orchestrator",
+            "label": "CALL",
+            "description": "ejecucion.py crea el Orchestrator principal."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/ejecucion.py",
+            "target": "process_comprobante",
+            "label": "CALL",
+            "description": "Primer step declarado en steps."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/ejecucion.py",
+            "target": "process_sustentacion",
+            "label": "CALL",
+            "description": "Segundo step declarado en steps."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/ejecucion.py",
+            "target": "process_rechazos",
+            "label": "CALL",
+            "description": "Tercer step declarado en steps."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "process_comprobante",
+            "label": "CONFIG",
+            "description": "Configura el orden de tareas del step Comprobante."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "process_sustentacion",
+            "label": "CONFIG",
+            "description": "Configura el orden de tareas del step SustentacionP."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "process_rechazos",
+            "label": "CONFIG",
+            "description": "Configura el orden de tareas del step Rechazos."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_productos_usos",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.usos y zona enmas.zn_sp."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_productos_dtrnp",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.dtrnp y zona enmas.zn_sp."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_productos_dreco",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.dreco y zona enmas.zn_sp."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_productos_hre",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.hre y zona enmas.zn_sp."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_productos_mae",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.mae y zona enmas.zn_sp."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_canales_tarj",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.tarj y zona enmas.zn_sc."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_canales_ctas",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.ctas y zona enmas.zn_sc."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_s_apoyo_gldytd",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.gldytd y zona enmas.zn_saf."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_resultados_pagos",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.pagos y zona enmas.zn_rf."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_resultados_llavero",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.llavero y zona enmas.zn_rf."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_resultados_datos_generales",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.datos_generales y zona enmas.zn_rf."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_resultados_relacion_cp",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.relacion_c_p y zona enmas.zn_rf."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_proc_comprobantes",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.comprobantes y zona enmas.zn_r."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/config.json",
+            "target": "table_proc_maestro_comprobantes",
+            "label": "CONFIG",
+            "description": "Parámetro global tablas.maestro_comprobantes y zona enmas.zn_r."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql",
+            "target": "table_proc_tmp_tarj_ctas",
+            "label": "SELECT",
+            "description": "Lectura de TARJ para construir tmp_tarj_ctas."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql",
+            "target": "table_proc_tmp_tarj_ctas",
+            "label": "SELECT",
+            "description": "Lectura de CTAS para construir tmp_tarj_ctas."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql",
+            "target": "table_s_canales_ctas",
+            "label": "JOIN",
+            "description": "JOIN por tjnrotrj = canrotrj y tjnrobco = canrobco dentro de tarj_ctas.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "target": "file_sql_general_tarj_ctas",
+            "label": "CALL",
+            "description": "extract_info_tarj ejecuta tarj_ctas.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql",
+            "target": "table_proc_tmp_tarj_ctas",
+            "label": "INSERT",
+            "description": "CREATE TABLE AS SELECT para tmp_tarj_ctas."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/usos.sql",
+            "target": "table_proc_pagos_cta_banco",
+            "label": "SELECT",
+            "description": "Extracción de usos con códigos M15 y T15."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/conciliador.py",
+            "target": "file_sql_general_usos",
+            "label": "CALL",
+            "description": "extract_comun_usos ejecuta general/usos.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/usos.sql",
+            "target": "table_proc_pagos_cta_banco",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE de {acroni}_pagos_cta_banco."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "BASE usa MATFFTRHUS con códigos P15 y B15."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "USOS_COMPLETO une pagos_cta_banco con BASE."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "MAE_PRIORIZADA aporta documento, nombre, cuenta y tipo_cuenta."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "TRMOR aporta tarjeta banco asociada."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "tmp_tarj_ctas aporta cuenta, tipo_cuenta y documento alterno."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "SELECT",
+            "description": "datos_generales aporta nombre/documento cliente activo."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_s_productos_mae",
+            "label": "JOIN",
+            "description": "LEFT JOIN por tarjeta_transporte y codigo_trx."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_s_productos_mor",
+            "label": "JOIN",
+            "description": "LEFT JOIN por tarjeta_transporte contra TRMORTT."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_tmp_tarj_ctas",
+            "label": "JOIN",
+            "description": "LEFT JOIN por trmortb = tarjeta."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_resultados_datos_generales",
+            "label": "JOIN",
+            "description": "LEFT JOIN por documento y tipo de documento."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/conciliador.py",
+            "target": "file_sql_comp_usos",
+            "label": "CALL",
+            "description": "extract_info_usos ejecuta comprobante/usos_comprobante.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql",
+            "target": "table_proc_comprobantes",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE de comprobantes_conc_transporte."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/pagos.sql",
+            "target": "table_proc_pagos",
+            "label": "SELECT",
+            "description": "Lectura de pagos ACH del día."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "target": "file_sql_sust_pagos",
+            "label": "CALL",
+            "description": "extract_info_pagos ejecuta pagos.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/pagos.sql",
+            "target": "table_proc_pagos",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE de {acroni}_pagos."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql",
+            "target": "table_proc_contabilidad",
+            "label": "SELECT",
+            "description": "Lectura de GLDYTD para fecha_ayer y cuentas 279505328, 168795327."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "target": "file_sql_sust_conta",
+            "label": "CALL",
+            "description": "extract_info_gldytd ejecuta contabilidad.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql",
+            "target": "table_proc_contabilidad",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE de {acroni}_contabilidad."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_proc_depositos",
+            "label": "SELECT",
+            "description": "Lectura de DTRNP para transacciones 6071, 5784, 6075, 6072, 5785."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_proc_depositos",
+            "label": "SELECT",
+            "description": "Subconsulta llavero_priorizado usa relación cliente producto."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_proc_depositos",
+            "label": "SELECT",
+            "description": "Subconsulta llavero_priorizado usa llavero MDM."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_proc_depositos",
+            "label": "SELECT",
+            "description": "JOIN final a datos_generales."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_resultados_llavero",
+            "label": "JOIN",
+            "description": "INNER JOIN por llave_sistema = llave_fuente."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_resultados_datos_generales",
+            "label": "JOIN",
+            "description": "LEFT JOIN por llave_mdm."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "target": "file_sql_general_dtrnp",
+            "label": "CALL",
+            "description": "extract_info_depositos ejecuta dtrnp.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dtrnp.sql",
+            "target": "table_proc_depositos",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE de depósitos desde DTRNP."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql",
+            "target": "table_proc_depositos",
+            "label": "SELECT",
+            "description": "Lectura de DRECO para códigos 2741 y 932."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql",
+            "target": "table_proc_depositos",
+            "label": "JOIN",
+            "description": "LEFT JOIN de DRECO con relación cliente producto por num_prod."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql",
+            "target": "table_proc_depositos",
+            "label": "JOIN",
+            "description": "LEFT JOIN de relación con llavero."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql",
+            "target": "table_proc_depositos",
+            "label": "JOIN",
+            "description": "LEFT JOIN final a datos_generales."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/sustentacion_pagos.py",
+            "target": "file_sql_general_dreco",
+            "label": "CALL",
+            "description": "extract_info_depositos ejecuta dreco.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/dreco.sql",
+            "target": "table_proc_depositos",
+            "label": "INSERT",
+            "description": "INSERT INTO de depósitos desde DRECO."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql",
+            "target": "table_proc_usos_depo",
+            "label": "SELECT",
+            "description": "Primera parte de la unificación toma comprobantes."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql",
+            "target": "table_proc_usos_depo",
+            "label": "SELECT",
+            "description": "Segunda parte de la unificación toma depósitos."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/comprobante.py",
+            "target": "file_sql_general_unificar",
+            "label": "CALL",
+            "description": "marcacion ejecuta unificar_usos_depo.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql",
+            "target": "table_proc_usos_depo",
+            "label": "INSERT",
+            "description": "INSERT OVERWRITE + INSERT INTO para unificar comprobantes y depósitos."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/comprobante.py",
+            "target": "table_proc_pagos_conciliados_tmp",
+            "label": "TRANSFORM",
+            "description": "Carga DataFrame conciliados generado por ejecutar_conciliacion hacia LZ."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/comprobante.py",
+            "target": "table_proc_pagos_pendientes_tmp",
+            "label": "TRANSFORM",
+            "description": "Carga DataFrame pendientes generado por ejecutar_conciliacion hacia LZ."
+        },
+        {
+            "source": "Sin fuente de información",
+            "target": "table_proc_maestro_comprobantes",
+            "label": "Sin fuente de información",
+            "description": "Sin fuente de información"
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/comprobante/marcar_comprobantes.sql",
+            "target": "table_proc_maestro_comprobantes",
+            "label": "INSERT",
+            "description": "marcar_comprobantes.sql inserta pendientes históricos al maestro de comprobantes."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql",
+            "target": "table_proc_hist_rechazos",
+            "label": "SELECT",
+            "description": "Lectura de HRE para histórico de rechazos entre fecha_consulta y fecha_revisar."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/rechazos.py",
+            "target": "file_sql_rech_hist",
+            "label": "CALL",
+            "description": "consulta_hist_rechazos ejecuta hist_rechazos.sql."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql",
+            "target": "table_proc_hist_rechazos",
+            "label": "INSERT",
+            "description": "INSERT INTO histórico de rechazos."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/adicionar_pendientes.sql",
+            "target": "table_proc_hist_rechazos",
+            "label": "INSERT",
+            "description": "adicionar_pendientes.sql agrega pendientes en negativo desde HRE."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/insertar_recuperaciones.sql",
+            "target": "table_proc_recuperaciones",
+            "label": "SELECT",
+            "description": "insertar_recuperaciones.sql compara rechazos de hoy vs ayer."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/insertar_recuperaciones.sql",
+            "target": "table_proc_recuperaciones",
+            "label": "JOIN",
+            "description": "JOIN entre RECHAZOS_HOY y RECHAZOS_AYER por documento, cuenta, código, valor, fecha_trx y tarjeta_trans."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/rechazos.py",
+            "target": "process_rechazos",
+            "label": "SELECT",
+            "description": "recuperaciones consulta obtener_recuperaciones.sql para enviar reporte."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/mov_cont_p_g.sql",
+            "target": "process_rechazos",
+            "label": "SELECT",
+            "description": "recalcular_fechas consulta mov_cont_p_g.sql sobre GLDYTD."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/fecha_consulta.sql",
+            "target": "process_rechazos",
+            "label": "SELECT",
+            "description": "consulta_fecha_consulta, fecha_temporalidad y fecha_corte leen tabla de control p_g."
+        },
+        {
+            "source": "src/an0010001_conc_transportes/static/sql/rechazos/cambiar_ftemp_fcon.sql",
+            "target": "table_proc_pg",
+            "label": "INSERT",
+            "description": "cambiar_ftemp_fcon.sql e insertar_ftemp.sql actualizan fechas de control en p_g."
+        }
+    ]
+}

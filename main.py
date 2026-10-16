@@ -1,4 +1,5 @@
 import os
+import json
 from langchain.agents import create_agent
 from dotenv import load_dotenv
 from langchain_ollama import ChatOllama
@@ -16,7 +17,7 @@ load_dotenv()
 
 os.environ["OPENAI_API_KEY"]= os.getenv("OPENAI_API_KEY")
 
-
+llm = ChatOllama(model="ornith-1.5:9b")
 
 
 @tool("List_files", description="Tool made for show the folders and files of a path")
@@ -32,29 +33,15 @@ def read_file(path:str) -> list:
         contenido = archivo.read()
         return contenido
 
-@tool("generar_imagen", description="Tool made for return an image with a prompt")
-def generar_imagen_tool(codigo_mermaid: str) -> str:
-    """Úsala cuando el usuario te pida crear, dibujar o mostrar una imagen."""
-   # Codificar el diagrama a base64 seguro para URL
-    graphbytes = codigo_mermaid.encode("utf8")
-    base64_bytes = base64.urlsafe_b64encode(graphbytes)
-    base64_string = base64_bytes.decode("ascii")
-
-    # Obtener la imagen desde la API de Mermaid.ink
-    url = f"https://mermaid.ink/img/{base64_string}"
-    respuesta = requests.get(url)
-
-    if respuesta.status_code == 200:
-        # Abrir y guardar la imagen localmente
-        imagen = im.open(io.BytesIO(respuesta.content))
-        imagen.save("diagrama.png")
-        return "diagram.png"
-    else:
-        raise ValueError("Error al generar la imagen.")
+@tool("write_json", description="tool made for write results in files .json")
+def write_json(result: dict):
+    """Write in a json file"""
+    with open("modelo.json", "w", encoding="utf-8") as f:
+        json.dump(result,f, indent=4, ensure_ascii=False)
 
 agent = create_agent(
-    model="openai:gpt-4o-mini", #llm - para hecerlo locar gpt-5.3-codex
-    tools=[{"type": "web_search"}, list_files, read_file],
+    model="openai:gpt-5.4", #"openai:gpt-4o-mini", #llm - para hecerlo locar gpt-5.3-codex
+    tools=[list_files, read_file, write_json],
     #prompt="you are a helpful assistant",
 )
 
@@ -62,7 +49,7 @@ agent = create_agent(
 stream =  agent.stream_events({
     "messages":[system_msg, {
         "role": "user",
-        "content": r"Hola chat necesito el mermaid de este proyecto: C:\Users\Jhon\OneDrive - Synaptica\Escritorio\transporte\calendarizar2\an0010001-conc-transportes para su modelo de datos, es un modelo orquestador"
+        "content": r"Hola chat necesito el modelo de datos de este proyecto: /Users/ander/Documents/an0010001_conc_transportes para su modelo de datos, es un modelo orquestador"
     }
     ]
 }, version="v3")

@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo de datos - an0010001_conc_transportes</title>
+
+<style>
+
+:root {
+    --bg: #020817;
+    --panel: #0b1220;
+    --panel2: #111827;
+    --border: #26344c;
+    --text: #e7eef8;
+    --muted: #8b9bb3;
+    --cyan: #00d9ff;
+    --green: #00d084;
+    --purple: #9b7cff;
+    --orange: #ff9f1c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow: hidden;
+    color: var(--text);
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    background:
+        radial-gradient(
+            circle at 20% 10%,
+            #0c1d3b 0,
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at 80% 80%,
+            #141936 0,
+            transparent 30%
+        ),
+        var(--bg);
+}
+
+.app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    height: 72px;
+    min-height: 72px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(5, 11, 25, .88);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(15px);
+    z-index: 20;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    color: var(--cyan);
+    box-shadow: 0 0 25px rgba(0,217,255,.12);
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 750;
+}
+
+.subtitle {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--panel2);
+    border-color: #53627b;
+}
+
+.workspace {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.viewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.viewport.dragging {
+    cursor: grabbing;
+}
+
+#diagram {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    user-select: none;
+}
+
+.canvas-background {
+    fill: #050b16;
+}
+
+.edge-line {
+    fill: none;
+    stroke: #64748b;
+    stroke-width: 2;
+}
+
+.arrow-head {
+    fill: #64748b;
+}
+
+.edge-label {
+    fill: #aab7c9;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.node {
+    cursor: pointer;
+    outline: none;
+}
+
+.node-card {
+    fill: #0d1626;
+    stroke: #2a3851;
+    stroke-width: 1.2;
+}
+
+.node:hover .node-card,
+.node:focus .node-card {
+    stroke: var(--cyan);
+    stroke-width: 1.8;
+}
+
+.node-accent {
+    fill: var(--cyan);
+}
+
+.node-process .node-accent {
+    fill: var(--green);
+}
+
+.node-file .node-accent {
+    fill: var(--purple);
+}
+
+.node-configuration .node-accent {
+    fill: var(--orange);
+}
+
+.node-type {
+    fill: #8da0ba;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.node-label {
+    fill: #f1f6ff;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.node-description {
+    fill: #9eacc0;
+    font-size: 11px;
+}
+
+.node-source {
+    fill: #62728b;
+    font-size: 9px;
+}
+
+.inspector {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 330px;
+    max-height: calc(100% - 40px);
+    overflow: auto;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(8,15,29,.95);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    z-index: 10;
+}
+
+.inspector.visible {
+    display: block;
+}
+
+.inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inspector h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.field {
+    margin-top: 16px;
+}
+
+.field-label {
+    color: #70819b;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.field-value {
+    margin-top: 5px;
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.legend,
+.zoom {
+    position: absolute;
+    bottom: 18px;
+    z-index: 10;
+}
+
+.legend {
+    left: 18px;
+    display: flex;
+    gap: 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(7,14,27,.88);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dot-table {
+    background: var(--cyan);
+}
+
+.dot-process {
+    background: var(--green);
+}
+
+.dot-file {
+    background: var(--purple);
+}
+
+.dot-configuration {
+    background: var(--orange);
+}
+
+.zoom {
+    right: 18px;
+    display: flex;
+    gap: 5px;
+}
+
+.zoom button {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+}
+
+.light {
+    --bg: #f4f7fb;
+    --panel: #fff;
+    --panel2: #eef2f8;
+    --border: #d6deea;
+    --text: #172033;
+    --muted: #65728a;
+}
+
+.light .header {
+    background: rgba(255,255,255,.9);
+}
+
+.light .canvas-background {
+    fill: #f7f9fc;
+}
+
+.light .node-card {
+    fill: #fff;
+    stroke: #ccd6e4;
+}
+
+.light .node-label {
+    fill: #182235;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <header class="header">
+
+        <div class="brand">
+            <div class="brand-icon">◇</div>
+
+            <div>
+                <div class="title">Modelo de datos - an0010001_conc_transportes</div>
+                <div class="subtitle">
+                    Data Architecture
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="theme">Light</button>
+            <button id="reset-view">Reset</button>
+            <button id="export-svg">↓ Export SVG</button>
+        </div>
+
+    </header>
+
+    <main class="workspace">
+
+        <div id="viewport" class="viewport">
+            
+        <svg id="diagram"
+             xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 16230 700">
+        <defs>
+            <marker id="arrow"
+                    markerWidth="10"
+                    markerHeight="10"
+                    refX="9"
+                    refY="3"
+                    orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" class="arrow-head"/>
+            </marker>
+            <filter id="shadow">
+                <feDropShadow
+                    dx="0"
+                    dy="7"
+                    stdDeviation="7"
+                    flood-opacity=".25"/>
+            </filter>
+        </defs>
+
+        <rect width="16230" height="700"
+              class="canvas-background"/>
+        
+            <g class="node node-file"
+               data-node-id="file_ejecucion_py"
+               data-type="file"
+               data-label="src/an0010001_conc_transportes/ejecucion.py"
+               data-description="Archivo de entrada del modelo orquestador. Construye el Orchestrator con los steps Comprobante, SustentacionP y Rechazos."
+               data-source="src/an0010001_conc_transportes/ejecucion.py"
+               transform="translate(1070,80)"
+               tabindex="0">
+
+                <rect width="500"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/ejecucion.py
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Archivo de entrada del modelo orquestador.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/eje
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_conciliador_py"
+               data-type="file"
+               data-label="src/an0010001_conc_transportes/conciliador.py"
+               data-description="Clase base de los steps. Carga parámetros de config.json, ajusta zonas/tablas y ejecuta tareas."
+               data-source="src/an0010001_conc_transportes/conciliador.py"
+               transform="translate(740,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/conciliador.py
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Clase base de los steps. Carga parámetros 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/con
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_comprobante_py"
+               data-type="file"
+               data-label="src/an0010001_conc_transportes/comprobante.py"
+               data-description="Step Comprobante. Ejecuta preparación de usos, conciliación, cargas temporales y marcación de comprobantes."
+               data-source="src/an0010001_conc_transportes/comprobante.py"
+               transform="translate(410,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/comprobante.py
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Step Comprobante. Ejecuta preparación de u
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/com
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sustentacion_py"
+               data-type="file"
+               data-label="src/an0010001_conc_transportes/sustentacion_pagos.py"
+               data-description="Step SustentacionP. Ejecuta extracción de pagos, depósitos, contabilidad y validaciones."
+               data-source="src/an0010001_conc_transportes/sustentacion_pagos.py"
+               transform="translate(1730,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/sustentacion_pagos.py
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Step SustentacionP. Ejecuta extracción de 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sus
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_rechazos_py"
+               data-type="file"
+               data-label="src/an0010001_conc_transportes/rechazos.py"
+               data-description="Step Rechazos. Gestiona histórico de rechazos, pendientes y recuperaciones."
+               data-source="src/an0010001_conc_transportes/rechazos.py"
+               transform="translate(1400,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/rechazos.py
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Step Rechazos. Gestiona histórico de recha
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/rec
+                </text>
+            </g>
+            
+            <g class="node node-configuration"
+               data-node-id="file_config_json"
+               data-type="configuration"
+               data-label="src/an0010001_conc_transportes/static/config.json"
+               data-description="Configuración global con zonas, tablas parametrizadas, fechas y orden de tareas."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(80,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ⚙ CONFIGURATION
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    src/an0010001_conc_transportes/static/config.json
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Configuración global con zonas, tablas par
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-process"
+               data-node-id="process_orchestrator"
+               data-type="process"
+               data-label="Orchestrator an0010001-conc-transportes"
+               data-description="Proceso orquestador principal."
+               data-source="src/an0010001_conc_transportes/ejecucion.py"
+               transform="translate(5030,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ⚙ PROCESS
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    Orchestrator an0010001-conc-transportes
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Proceso orquestador principal.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/eje
+                </text>
+            </g>
+            
+            <g class="node node-process"
+               data-node-id="process_comprobante"
+               data-type="process"
+               data-label="Step Comprobante"
+               data-description="Orden de tareas: actualizar_fechas -&gt; extract_info_usos -&gt; validar_calidad_usos -&gt; marcacion -&gt; marcar_comprobantes."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(5360,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ⚙ PROCESS
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    Step Comprobante
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Orden de tareas: actualizar_fechas -&gt; e
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-process"
+               data-node-id="process_sustentacion"
+               data-type="process"
+               data-label="Step SustentacionP"
+               data-description="Orden de tareas: cargar_configuracion -&gt; actualizar_fechas -&gt; validar_mdm -&gt; extract_info_tarj -&gt; extract_comun_usos -&gt; extract_info_usos -&gt; validar_calidad_usos -&gt; extract_info_pagos -&gt; validar_pagos -&gt; validar_pagos_acumulados -&gt; ultima_fecha_comprobante -&gt; extract_info_depositos -&gt; extract_info_gldytd."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(6020,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ⚙ PROCESS
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    Step SustentacionP
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Orden de tareas: cargar_configuracion -&gt
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-process"
+               data-node-id="process_rechazos"
+               data-type="process"
+               data-label="Step Rechazos"
+               data-description="Orden de tareas: recalcular_fechas -&gt; consulta_fecha_consulta -&gt; consulta_fecha_temporalidad -&gt; consulta_hist_rechazos -&gt; adicionar_pendientes -&gt; recuperaciones."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(5690,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ⚙ PROCESS
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    Step Rechazos
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Orden de tareas: recalcular_fechas -&gt; c
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_usos"
+               data-type="table"
+               data-label="proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRHUS"
+               data-description="Tabla origen de usos parametrizada como {zn_sp}.{usos}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(14270,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRHUS
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen de usos parametrizada como {z
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_dtrnp"
+               data-type="table"
+               data-label="proceso_enmascarado.BVD_VISIONRY_DTRNP"
+               data-description="Tabla origen de depósitos DTRNP parametrizada como {zn_sp}.{dtrnp}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(7010,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.BVD_VISIONRY_DTRNP
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen de depósitos DTRNP parametriz
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_dreco"
+               data-type="table"
+               data-label="proceso_enmascarado.BVD_VISIONR_DRECO"
+               data-description="Tabla origen de depósitos DRECO parametrizada como {zn_sp}.{dreco}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(6680,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.BVD_VISIONR_DRECO
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen de depósitos DRECO parametriz
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_hre"
+               data-type="table"
+               data-label="proceso_enmascarado.MAT_MATLIBRAMD_MATTBTRHRE"
+               data-description="Tabla origen de rechazos parametrizada como {zn_sp}.{hre}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(15260,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.MAT_MATLIBRAMD_MATTBTRHRE
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen de rechazos parametrizada com
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_mae"
+               data-type="table"
+               data-label="proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMAE"
+               data-description="Tabla origen MAE parametrizada como {zn_sp}.{mae}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(14600,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMAE
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen MAE parametrizada como {zn_sp
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_productos_mor"
+               data-type="table"
+               data-label="proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMOR"
+               data-description="Tabla origen MOR parametrizada como {zn_sp}.mat_matlibramd_matfftrmor y como parámetro {mor}."
+               data-source="src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql"
+               transform="translate(14930,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.MAT_MATLIBRAMD_MATFFTRMOR
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen MOR parametrizada como {zn_sp
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_canales_tarj"
+               data-type="table"
+               data-label="proceso_enmascarado.CAB_CABLIBRAMD_CABFFTARJ"
+               data-description="Tabla origen TARJ parametrizada como {zn_sc}.{tarj}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(7670,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.CAB_CABLIBRAMD_CABFFTARJ
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen TARJ parametrizada como {zn_s
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_canales_ctas"
+               data-type="table"
+               data-label="proceso_enmascarado.CAB_CABLIBRAMD_CABFFCTAS"
+               data-description="Tabla origen CTAS parametrizada como {zn_sc}.{ctas}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(7340,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.CAB_CABLIBRAMD_CABFFCTAS
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen CTAS parametrizada como {zn_s
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_s_apoyo_gldytd"
+               data-type="table"
+               data-label="proceso_enmascarado.bks_ccsap_visionr_gldytd"
+               data-description="Tabla origen GLDYTD parametrizada como {zn_saf}.{gldytd}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(6350,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.bks_ccsap_visionr_gldytd
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen GLDYTD parametrizada como {zn
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_resultados_pagos"
+               data-type="table"
+               data-label="proceso_enmascarado.fcr_pab_transacciones_pagos"
+               data-description="Tabla origen de pagos parametrizada como {zn_rf}.{pagos}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(13940,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.fcr_pab_transacciones_pagos
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla origen de pagos parametrizada como {
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_resultados_llavero"
+               data-type="table"
+               data-label="proceso_enmascarado.FCR_MDM_LLAVERO_CLIENTES"
+               data-description="Tabla MDM llavero parametrizada como {zn_rf}.{llavero}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(13280,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.FCR_MDM_LLAVERO_CLIENTES
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla MDM llavero parametrizada como {zn_r
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_resultados_datos_generales"
+               data-type="table"
+               data-label="proceso_enmascarado.fcr_mdm_datos_generales_clientes"
+               data-description="Tabla MDM datos generales parametrizada como {zn_rf}.{datos_generales}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(12950,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.fcr_mdm_datos_generales_clientes
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla MDM datos generales parametrizada co
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_resultados_relacion_cp"
+               data-type="table"
+               data-label="proceso_enmascarado.fcr_mdm_relacion_cliente_producto"
+               data-description="Tabla MDM relación cliente producto parametrizada como {zn_rf}.{relacion_c_p}."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(13610,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.fcr_mdm_relacion_cliente_producto
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla MDM relación cliente producto parame
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_comprobantes"
+               data-type="table"
+               data-label="proceso_enmascarado.comprobantes_conc_transporte"
+               data-description="Tabla destino de comprobantes diarios."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(8000,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.comprobantes_conc_transporte
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla destino de comprobantes diarios.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_maestro_comprobantes"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_maestro_comprobantes"
+               data-description="Tabla maestro de comprobantes parametrizada en config."
+               data-source="src/an0010001_conc_transportes/static/config.json"
+               transform="translate(9320,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_maestro_comprobantes
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla maestro de comprobantes parametrizad
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_tmp_tarj_ctas"
+               data-type="table"
+               data-label="proceso_enmascarado.tmp_tarj_ctas"
+               data-description="Tabla temporal creada con cruce de TARJ y CTAS."
+               data-source="src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql"
+               transform="translate(15590,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.tmp_tarj_ctas
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal creada con cruce de TARJ y 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos_cta_banco"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos_cta_banco"
+               data-description="Tabla temporal de usos base para pagos a empresas de transporte."
+               data-source="src/an0010001_conc_transportes/static/sql/general/usos.sql"
+               transform="translate(11300,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos_cta_banco
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal de usos base para pagos a e
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_depositos"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_depositos"
+               data-description="Tabla temporal de depósitos DTRNP y DRECO."
+               data-source="src/an0010001_conc_transportes/static/sql/general/dtrnp.sql"
+               transform="translate(8660,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_depositos
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal de depósitos DTRNP y DRECO.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_usos_sust"
+               data-type="table"
+               data-label="Sin fuente de información"
+               data-description="Tabla temporal de usos de sustentaciónP. El nombre se infiere en Python como {acroni}_usos_sustentacionP, pero no se encontró el SQL de creación/carga en la evidencia leída."
+               data-source="src/an0010001_conc_transportes/conciliador.py"
+               transform="translate(15920,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    Sin fuente de información
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal de usos de sustentaciónP. E
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/con
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos"
+               data-description="Tabla temporal de pagos ACH."
+               data-source="src/an0011_conc_transportes/static/sql/sustentacionP/pagos.sql"
+               transform="translate(10310,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal de pagos ACH.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0011_conc_transportes/static
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_contabilidad"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_contabilidad"
+               data-description="Tabla temporal de movimientos contables GLDYTD."
+               data-source="src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql"
+               transform="translate(8330,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_contabilidad
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal de movimientos contables GL
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_usos_depo"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_usos_depo"
+               data-description="Tabla temporal unificada de comprobantes y depósitos para conciliación."
+               data-source="src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql"
+               transform="translate(12620,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_usos_depo
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal unificada de comprobantes y
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos_conciliados_tmp"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos_conciliados"
+               data-description="Tabla temporal cargada desde DataFrame de conciliados."
+               data-source="src/an0010001_conc_transportes/comprobante.py"
+               transform="translate(10640,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos_conciliados
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal cargada desde DataFrame de 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/com
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos_pendientes_tmp"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos_pendientes"
+               data-description="Tabla temporal cargada desde DataFrame de pendientes."
+               data-source="src/an0010001_conc_transportes/comprobante.py"
+               transform="translate(11630,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos_pendientes
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla temporal cargada desde DataFrame de 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/com
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos_conciliados_hist"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos_conciliados_hist"
+               data-description="Histórico de conciliados."
+               data-source="src/an0010001_conc_transportes/static/sql/comprobante/insertar_conciliados.sql"
+               transform="translate(10970,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos_conciliados_hist
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Histórico de conciliados.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pagos_pendientes_hist"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_pagos_pendientes_hist"
+               data-description="Histórico de pendientes."
+               data-source="src/an0010001_conc_transportes/static/sql/comprobante/insertar_pendientes.sql"
+               transform="translate(11960,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_pagos_pendientes_hist
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Histórico de pendientes.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_mala_calidad"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_mala_calidad"
+               data-description="Tabla de registros con calidad incompleta."
+               data-source="src/an0010001_conc_transportes/static/sql/general/guardar_usos_incompletos.sql"
+               transform="translate(9650,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_mala_calidad
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla de registros con calidad incompleta.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_hist_rechazos"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_hist_rechazos"
+               data-description="Histórico de rechazos y pendientes por cobrar."
+               data-source="src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql"
+               transform="translate(8990,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_hist_rechazos
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Histórico de rechazos y pendientes por cob
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_recuperaciones"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_recuperaciones"
+               data-description="Tabla de recuperaciones detectadas por cambio de estado entre días."
+               data-source="src/an0010001_conc_transportes/static/sql/rechazos/insertar_recuperaciones.sql"
+               transform="translate(12290,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_recuperaciones
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla de recuperaciones detectadas por cam
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-table"
+               data-node-id="table_proc_pg"
+               data-type="table"
+               data-label="proceso_enmascarado.conc_transporte_temp_p_g"
+               data-description="Tabla de control de fechas de consulta, corte y fuera de temporalidad."
+               data-source="src/an0010001_conc_transportes/static/sql/rechazos/fecha_consulta.sql"
+               transform="translate(9980,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▣ DATABASE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    proceso_enmascarado.conc_transporte_temp_p_g
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Tabla de control de fechas de consulta, co
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_general_usos"
+               data-type="file"
+               data-label="static/sql/general/usos.sql"
+               data-description="Carga {acroni}_pagos_cta_banco desde usos."
+               data-source="src/an0010001_conc_transportes/static/sql/general/usos.sql"
+               transform="translate(3710,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/general/usos.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Carga {acroni}_pagos_cta_banco desde usos.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_general_tarj_ctas"
+               data-type="file"
+               data-label="static/sql/general/tarj_ctas.sql"
+               data-description="Crea tmp_tarj_ctas con JOIN entre TARJ y CTAS."
+               data-source="src/an0010001_conc_transportes/static/sql/general/tarj_ctas.sql"
+               transform="translate(3050,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/general/tarj_ctas.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Crea tmp_tarj_ctas con JOIN entre TARJ y C
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_general_dtrnp"
+               data-type="file"
+               data-label="static/sql/general/dtrnp.sql"
+               data-description="Inserta depósitos desde DTRNP con joins a MDM."
+               data-source="src/an0010001_conc_transportes/static/sql/general/dtrnp.sql"
+               transform="translate(2720,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/general/dtrnp.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Inserta depósitos desde DTRNP con joins a 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_general_dreco"
+               data-type="file"
+               data-label="static/sql/general/dreco.sql"
+               data-description="Inserta depósitos desde DRECO con joins a MDM."
+               data-source="src/an0010001_conc_transportes/static/sql/general/dreco.sql"
+               transform="translate(2390,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/general/dreco.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Inserta depósitos desde DRECO con joins a 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_general_unificar"
+               data-type="file"
+               data-label="static/sql/general/unificar_usos_depo.sql"
+               data-description="Unifica comprobantes y depósitos en tabla temporal para conciliación."
+               data-source="src/an0010001_conc_transportes/static/sql/general/unificar_usos_depo.sql"
+               transform="translate(3380,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/general/unificar_usos_depo.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Unifica comprobantes y depósitos en tabla 
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_comp_usos"
+               data-type="file"
+               data-label="static/sql/comprobante/usos_comprobante.sql"
+               data-description="Construye comprobantes enriquecidos con MAE, MOR, tmp_tarj_ctas y MDM."
+               data-source="src/an0010001_conc_transportes/static/sql/comprobante/usos_comprobante.sql"
+               transform="translate(2060,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/comprobante/usos_comprobante.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Construye comprobantes enriquecidos con MA
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_sust_pagos"
+               data-type="file"
+               data-label="static/sql/sustentacionP/pagos.sql"
+               data-description="Carga tabla temporal de pagos ACH."
+               data-source="src/an0010001_conc_transportes/static/sql/sustentacionP/pagos.sql"
+               transform="translate(4700,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/sustentacionP/pagos.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Carga tabla temporal de pagos ACH.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_sust_conta"
+               data-type="file"
+               data-label="static/sql/sustentacionP/contabilidad.sql"
+               data-description="Carga tabla temporal de contabilidad GLDYTD."
+               data-source="src/an0010001_conc_transportes/static/sql/sustentacionP/contabilidad.sql"
+               transform="translate(4370,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/sustentacionP/contabilidad.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Carga tabla temporal de contabilidad GLDYT
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            
+            <g class="node node-file"
+               data-node-id="file_sql_rech_hist"
+               data-type="file"
+               data-label="static/sql/rechazos/hist_rechazos.sql"
+               data-description="Carga histórico de rechazos desde HRE."
+               data-source="src/an0010001_conc_transportes/static/sql/rechazos/hist_rechazos.sql"
+               transform="translate(4040,80)"
+               tabindex="0">
+
+                <rect width="230"
+                      height="120"
+                      rx="14"
+                      class="node-card"
+                      filter="url(#shadow)"/>
+
+                <rect width="230"
+                      height="4"
+                      rx="2"
+                      class="node-accent"/>
+
+                <text x="20" y="30" class="node-type">
+                    ▤ FILE
+                </text>
+
+                <text x="20" y="62" class="node-label">
+                    static/sql/rechazos/hist_rechazos.sql
+                </text>
+
+                <text x="20" y="88" class="node-description">
+                    Carga histórico de rechazos desde HRE.
+                </text>
+
+                <text x="20" y="108" class="node-source">
+                    src/an0010001_conc_transportes/sta
+                </text>
+            </g>
+            </svg>
+        </div>
+
+        <aside id="inspector" class="inspector">
+
+            <div class="inspector-header">
+                <h2 id="inspector-title">Node</h2>
+
+                <button id="close-inspector">
+                    ×
+                </button>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Tipo</div>
+                <div id="inspector-type"
+                     class="field-value"></div>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Descripción</div>
+                <div id="inspector-description"
+                     class="field-value"></div>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Fuente</div>
+                <div id="inspector-source"
+                     class="field-value"></div>
+            </div>
+
+        </aside>
+
+        <div class="legend">
+            <div class="legend-item">
+                <span class="dot dot-table"></span>
+                Table
+            </div>
+
+            <div class="legend-item">
+                <span class="dot dot-process"></span>
+                Process
+            </div>
+
+            <div class="legend-item">
+                <span class="dot dot-file"></span>
+                File
+            </div>
+
+            <div class="legend-item">
+                <span class="dot dot-configuration"></span>
+                Config
+            </div>
+        </div>
+
+        <div class="zoom">
+            <button id="zoom-out">−</button>
+            <button id="zoom-in">+</button>
+        </div>
+
+    </main>
+</div>
+
+<script>
+
+const viewport = document.getElementById("viewport");
+const diagram = document.getElementById("diagram");
+const inspector = document.getElementById("inspector");
+
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
+let dragging = false;
+let startX = 0;
+let startY = 0;
+
+
+function renderTransform() {
+    diagram.style.transform =
+        `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+}
+
+
+function zoomAt(factor, clientX, clientY) {
+    const oldScale = scale;
+    const newScale = Math.min(
+        2.5,
+        Math.max(.25, scale * factor)
+    );
+
+    const rect = viewport.getBoundingClientRect();
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    offsetX = x - (x - offsetX) * (newScale / oldScale);
+    offsetY = y - (y - offsetY) * (newScale / oldScale);
+
+    scale = newScale;
+
+    renderTransform();
+}
+
+
+viewport.addEventListener("mousedown", (event) => {
+    if (event.target.closest(".node")) {
+        return;
+    }
+
+    dragging = true;
+    viewport.classList.add("dragging");
+
+    startX = event.clientX - offsetX;
+    startY = event.clientY - offsetY;
+});
+
+
+window.addEventListener("mousemove", (event) => {
+    if (!dragging) {
+        return;
+    }
+
+    offsetX = event.clientX - startX;
+    offsetY = event.clientY - startY;
+
+    renderTransform();
+});
+
+
+window.addEventListener("mouseup", () => {
+    dragging = false;
+    viewport.classList.remove("dragging");
+});
+
+
+viewport.addEventListener("wheel", (event) => {
+    event.preventDefault();
+
+    zoomAt(
+        event.deltaY < 0 ? 1.1 : .9,
+        event.clientX,
+        event.clientY
+    );
+}, { passive: false });
+
+
+document.querySelectorAll(".node").forEach((node) => {
+    node.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        document.getElementById("inspector-title").textContent =
+            node.dataset.label;
+
+        document.getElementById("inspector-type").textContent =
+            node.dataset.type;
+
+        document.getElementById("inspector-description").textContent =
+            node.dataset.description || "Sin descripción";
+
+        document.getElementById("inspector-source").textContent =
+            node.dataset.source || "Sin fuente de información";
+
+        inspector.classList.add("visible");
+    });
+});
+
+
+document.getElementById("close-inspector").addEventListener(
+    "click",
+    () => inspector.classList.remove("visible")
+);
+
+
+document.getElementById("zoom-in").addEventListener("click", () => {
+    zoomAt(1.15, innerWidth / 2, innerHeight / 2);
+});
+
+
+document.getElementById("zoom-out").addEventListener("click", () => {
+    zoomAt(.87, innerWidth / 2, innerHeight / 2);
+});
+
+
+document.getElementById("reset-view").addEventListener("click", () => {
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    renderTransform();
+});
+
+
+document.getElementById("theme").addEventListener("click", () => {
+    document.body.classList.toggle("light");
+
+    document.getElementById("theme").textContent =
+        document.body.classList.contains("light")
+            ? "Dark"
+            : "Light";
+});
+
+
+document.getElementById("export-svg").addEventListener("click", () => {
+    const svg = document.getElementById("diagram");
+
+    const source = new XMLSerializer()
+        .serializeToString(svg);
+
+    const blob = new Blob(
+        [source],
+        { type: "image/svg+xml;charset=utf-8" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "architecture.svg";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+});
+
+
+renderTransform();
+
+</script>
+
+</body>
+</html>
